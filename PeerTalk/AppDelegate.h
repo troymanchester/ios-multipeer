@@ -7,7 +7,7 @@
 
 #import <UIKit/UIKit.h>
 
-@interface AppDelegate : UIResponder <UIApplicationDelegate>
+@interface MCAppDelegate : UIResponder <UIApplicationDelegate>
 
 
 @end

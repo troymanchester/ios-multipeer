@@ -6,8 +6,15 @@
 //
 
 #import <UIKit/UIKit.h>
+#import <MultipeerConnectivity/MultipeerConnectivity.h>
 
-@interface ViewController : UIViewController
+// service name(s) for our app
+// text chat
+static NSString * const ptChatServiceType = @"peertalk-text";
+// TODO: implement audio streaming!
+//static NSString * const ptVoiceServiceType = @"peertalk-voice";
+
+@interface ViewController : UIViewController <UIApplicationDelegate, MCNearbyServiceAdvertiserDelegate, MCNearbyServiceBrowserDelegate, MCSessionDelegate, MCBrowserViewControllerDelegate>
 
 
 @end
