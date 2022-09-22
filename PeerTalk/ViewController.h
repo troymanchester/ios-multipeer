@@ -14,7 +14,7 @@ static NSString * const ptChatServiceType = @"peertalk-text";
 // TODO: implement audio streaming!
 //static NSString * const ptVoiceServiceType = @"peertalk-voice";
 
-@interface ViewController : UIViewController <UIApplicationDelegate, MCNearbyServiceAdvertiserDelegate, MCNearbyServiceBrowserDelegate, MCSessionDelegate, MCBrowserViewControllerDelegate>
+@interface ViewController : UIViewController <UIApplicationDelegate, /*MCAdvertiserAssistantDelegate*/MCNearbyServiceAdvertiserDelegate, MCNearbyServiceBrowserDelegate, MCSessionDelegate, MCBrowserViewControllerDelegate>
 
 
 @end

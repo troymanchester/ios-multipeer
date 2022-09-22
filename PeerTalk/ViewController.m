@@ -6,13 +6,15 @@
 //
 
 #import "ViewController.h"
+#import "AudioToolbox/AudioToolbox.h"
 
 @interface ViewController ()
 @property (nonatomic, copy) MCPeerID *peerID;
 @property (nonatomic, copy) MCSession *session;
 @property (nonatomic, copy) MCNearbyServiceAdvertiser *advertiser;
-@property (nonatomic, copy) MCNearbyServiceBrowser *browser;
+//@property (nonatomic, copy) MCAdvertiserAssistant *advertiser;
 @property (nonatomic, copy) MCBrowserViewController *browserViewController;
+@property (nonatomic, copy) UIButton *sendDataButton;
 
 @end
 
@@ -41,27 +43,50 @@
                                             serviceType:ptChatServiceType];
     _advertiser.delegate = self;
     [_advertiser startAdvertisingPeer];
-    
-    // create service browser!
-    _browser = [[MCNearbyServiceBrowser alloc] initWithPeer:_peerID serviceType:ptChatServiceType];
-    _browser.delegate = self;
+    //TODO: try using advertiser assistant here instead..
+    /*_advertiser =
+        [[MCAdvertiserAssistant alloc] initWithServiceType:ptChatServiceType
+                                       discoveryInfo:nil
+                                       session:_session];
+    _advertiser.delegate = self;
+    [_advertiser start];*/
+
+    _sendDataButton = [UIButton buttonWithType:UIButtonTypeRoundedRect];
+    [_sendDataButton setTitle:@"Send Data" forState:UIControlStateNormal];
+    [_sendDataButton addTarget:self
+                     action:@selector(sendDataToPeers)
+                     forControlEvents:UIControlEventTouchUpInside];
+    _sendDataButton.frame = CGRectMake(80.0, 210.0, 160.0, 40.0);
+    [[self view] addSubview:_sendDataButton];
+}
+
+- (void)sendDataToPeers
+{
+    NSString *message = @"hello peer!";
+    NSData *data = [message dataUsingEncoding:NSUTF8StringEncoding];
+    NSError *error = nil;
+    // this seems really hacky - I only want to send to 1 peer!
+    if (![self.session sendData:data
+                        toPeers:self.session.connectedPeers
+                       withMode:MCSessionSendDataReliable
+                          error:&error]) {
+        NSLog(@"[Error] %@", error);
+    }
 }
 
 - (void)viewDidAppear:(BOOL)animated
 {
     // use Apple standard MC browser view controller..
-    // apparently this needs to go in viewDidAppear not viewDidLoad??
-    _browserViewController =
-        [[MCBrowserViewController alloc] initWithBrowser:_browser
-                                                 session:_session];
-    _browserViewController.delegate = self;
-    [self presentViewController:_browserViewController
-                       animated:YES
-                     completion:
-    ^{
-        NSLog(@"Calling startBrowsingForPeers...");
-        [self->_browser startBrowsingForPeers];
-    }];
+    // apparently this needs to go in viewDidAppear not viewDidLoad...
+    if (_session.connectedPeers.count < 1)
+    {
+        _browserViewController =
+            [[MCBrowserViewController alloc] initWithServiceType:ptChatServiceType session:_session];
+        _browserViewController.delegate = self;
+        [self presentViewController:_browserViewController
+                           animated:YES
+                         completion:nil];
+    }
 }
 
 // TODO: Should be using MCAdvertiserAssistant instead??
@@ -84,9 +109,9 @@ didReceiveInvitationFromPeer:(MCPeerID *)peerID
 withDiscoveryInfo:(NSDictionary<NSString *,NSString *> *)info
 {
     // called when a nearby device is found
-    // invite peer to a session!
-    NSLog(@"Invite peer to session!");
-    [browser invitePeer:peerID toSession:_session withContext:nil timeout:10];
+    // Show MC Browser view controller
+    NSLog(@"found peer!");
+    [self presentViewController:_browserViewController animated:true completion:nil];
 }
 
 - (void)browser:(MCNearbyServiceBrowser *)browser
@@ -103,13 +128,12 @@ withDiscoveryInfo:(NSDictionary<NSString *,NSString *> *)info
 {
     NSLog(@"session did change state...");
     // called when peer state changes - use to detect connection established
-    // TODO: actually cache the peer! Right now this just sends a message
     if (state == MCSessionStateConnected)
     {
         NSString *message = @"Session connected!!";
         NSData *data = [message dataUsingEncoding:NSUTF8StringEncoding];
         NSError *error = nil;
-        // this seems really hacky - I only want to send to 1 peer!
+        // this seems really hacky - I only want to send to 1 peer so can't use session connectedPeers.
         MCPeerID* peers[] = {peerID};
         NSArray<MCPeerID*> *peerIDs= [NSArray arrayWithObjects:peers count:1];
         if (![self.session sendData:data
@@ -130,6 +154,9 @@ withDiscoveryInfo:(NSDictionary<NSString *,NSString *> *)info
             [[NSString alloc] initWithData:data
                                   encoding:NSUTF8StringEncoding];
     NSLog(@"Message received from peer: %@", message);
+    
+    // play a notification sound for now...
+    AudioServicesPlaySystemSound(1003);
 }
 
 - (void)session:(MCSession *)session
