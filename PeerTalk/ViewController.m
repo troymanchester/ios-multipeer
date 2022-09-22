@@ -65,7 +65,6 @@
     NSString *message = @"hello peer!";
     NSData *data = [message dataUsingEncoding:NSUTF8StringEncoding];
     NSError *error = nil;
-    // this seems really hacky - I only want to send to 1 peer!
     if (![self.session sendData:data
                         toPeers:self.session.connectedPeers
                        withMode:MCSessionSendDataReliable
@@ -76,8 +75,11 @@
 
 - (void)viewDidAppear:(BOOL)animated
 {
-    // use Apple standard MC browser view controller..
+    // use Apple standard MC browser view controller.
     // apparently this needs to go in viewDidAppear not viewDidLoad...
+    // check number of connected peers before showing service browser - otherwise the
+    // service browser view will continually pop up!
+    // TODO: add a way to re-invoke the service browser!
     if (_session.connectedPeers.count < 1)
     {
         _browserViewController =
@@ -100,24 +102,6 @@ didReceiveInvitationFromPeer:(MCPeerID *)peerID
     // accept the invitation!
     NSLog(@"accept invitation!");
     invitationHandler(true, _session);
-}
-
-#pragma mark - MCNearbyServiceBrowserDelegate
-
-- (void)browser:(MCNearbyServiceBrowser *)browser
-      foundPeer:(MCPeerID *)peerID
-withDiscoveryInfo:(NSDictionary<NSString *,NSString *> *)info
-{
-    // called when a nearby device is found
-    // Show MC Browser view controller
-    NSLog(@"found peer!");
-    [self presentViewController:_browserViewController animated:true completion:nil];
-}
-
-- (void)browser:(MCNearbyServiceBrowser *)browser
-       lostPeer:(MCPeerID *)peerID
-{
-    // called when nearby device goes away! Probably no-op
 }
 
 #pragma mark - MCSessionDelegate
@@ -195,13 +179,11 @@ didFinishReceivingResourceWithName:(NSString *)resourceName
 
 - (void)browserViewControllerDidFinish:(MCBrowserViewController *)browserViewController
 {
-    NSLog(@"browser view controller did finish");
     [browserViewController dismissViewControllerAnimated:true completion: nil];
 }
 
 - (void)browserViewControllerWasCancelled:(MCBrowserViewController *)browserViewController
 {
-    NSLog(@"browser view controller was cancelled");
     [browserViewController dismissViewControllerAnimated:true completion: nil];
 }
 
